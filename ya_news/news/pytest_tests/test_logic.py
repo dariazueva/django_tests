@@ -8,13 +8,15 @@ from pytest_django.asserts import assertFormError, assertRedirects
 
 
 @pytest.mark.django_db
-def test_anonymous_user_cant_create_comment(client, form_data, id_for_args):
+def test_anonymous_user_cant_create_comment(client, form_data,
+                                            id_for_args,
+                                            comments_count_before):
     url = reverse('news:detail', args=id_for_args)
     response = client.post(url, data=form_data)
     login_url = reverse('users:login')
     expected_url = f'{login_url}?next={url}'
     assertRedirects(response, expected_url)
-    assert Comment.objects.count() == 0
+    assert Comment.objects.count() == comments_count_before
 
 
 def test_user_can_create_comment(author_client, author,
@@ -30,7 +32,8 @@ def test_user_can_create_comment(author_client, author,
 
 
 @pytest.mark.django_db
-def test_user_cant_use_bad_words(admin_client, id_for_args):
+def test_user_cant_use_bad_words(admin_client, id_for_args,
+                                 comments_count_before):
     url = reverse('news:detail', args=id_for_args)
     bad_words_data = {'text': f'Какой-то текст, {BAD_WORDS[0]}, еще текст'}
     response = admin_client.post(url, data=bad_words_data)
@@ -41,18 +44,19 @@ def test_user_cant_use_bad_words(admin_client, id_for_args):
         errors=WARNING
     )
     comments_count = Comment.objects.count()
-    assert comments_count == 0
+    assert comments_count == comments_count_before
 
 
 def test_author_can_delete_comment(author_client,
-                                   id_for_args, id_comment_for_args):
+                                   id_for_args, id_comment_for_args,
+                                   comments_count_before):
     url = reverse('news:detail', args=id_for_args)
     url_to_comments = f'{url}#comments'
     delete_url = reverse('news:delete', args=id_comment_for_args)
     response = author_client.delete(delete_url)
     assertRedirects(response, url_to_comments)
     comments_count = Comment.objects.count()
-    assert comments_count == 0
+    assert comments_count == comments_count_before - 1
 
 
 def test_author_can_edit_comment(author_client, comment,
@@ -77,8 +81,9 @@ def test_user_cant_edit_comment_of_another_user(admin_client,
 
 
 def test_user_cant_delete_comment_of_another_user(admin_client, comment,
-                                                  id_comment_for_args):
+                                                  id_comment_for_args,
+                                                  comments_count_before):
     url = reverse('news:delete', args=id_comment_for_args)
     response = admin_client.post(url)
     assert response.status_code == HTTPStatus.NOT_FOUND
-    assert Comment.objects.count() == 1
+    assert Comment.objects.count() == comments_count_before

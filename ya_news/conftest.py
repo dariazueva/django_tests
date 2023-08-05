@@ -76,3 +76,9 @@ def comments(author, new):
         comment.save()
         comments.append(comment)
     return comments
+
+
+@pytest.fixture
+def comments_count_before(comments):
+    comments_count_before = Comment.objects.count()
+    return comments_count_before
