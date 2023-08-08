@@ -3,9 +3,10 @@ from http import HTTPStatus
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
+from pytils.translit import slugify
+
 from notes.forms import WARNING
 from notes.models import Note
-from pytils.translit import slugify
 
 User = get_user_model()
 
@@ -24,15 +25,14 @@ class TestNoteCreation(TestCase):
         cls.auth_client.force_login(cls.user)
         cls.form_data = {'text': cls.NOTE_TEXT, 'title': cls.NOTE_TITLE,
                          'slug': cls.NOTE_SLUG, 'author': cls.auth_client}
-        cls.url_to_add = reverse('notes:add')
-        cls.url_to_done = reverse('notes:success', None)
+        cls.url_to_done = reverse('notes:success')
 
     def test_user_can_create_note(self):
         response = self.auth_client.post(self.url, data=self.form_data)
-        self.assertRedirects(response, reverse('notes:success'))
+        self.assertRedirects(response, self.url_to_done)
         note_count = Note.objects.count()
         self.assertEqual(note_count, self.notes_counts + 1)
-        note = Note.objects.get()
+        note = Note.objects.last()
         self.assertEqual(note.title, self.NOTE_TITLE)
         self.assertEqual(note.slug, self.NOTE_SLUG)
         self.assertEqual(note.text, self.NOTE_TEXT)
@@ -45,7 +45,7 @@ class TestNoteCreation(TestCase):
 
     def test_empty_slug(self):
         self.form_data.pop('slug')
-        response = self.auth_client.post(self.url_to_add, data=self.form_data)
+        response = self.auth_client.post(self.url, data=self.form_data)
         self.assertRedirects(response, self.url_to_done)
         self.assertEqual(Note.objects.count(), self.notes_counts + 1)
         new_note = Note.objects.get()
@@ -80,9 +80,8 @@ class TestNoteEditDelete(TestCase):
         cls.delete_url = reverse('notes:delete', args=(cls.note.slug,))
         cls.form_data = {'text': cls.NEW_NOTE_TEXT,
                          'title': cls.NEW_NOTE_TITLE,
-                         'slug': cls.NEW_NOTE_SLUG,
-                         'author': cls.author_client}
-        cls.url_to_done = reverse('notes:success', None)
+                         'slug': cls.NEW_NOTE_SLUG}
+        cls.url_to_done = reverse('notes:success')
         cls.url_to_add = reverse('notes:add')
 
     def test_author_can_edit_note(self):

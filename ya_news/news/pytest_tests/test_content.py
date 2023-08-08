@@ -1,38 +1,38 @@
 import pytest
+from django.conf import settings
 from django.urls import reverse
-from yanews.settings import NEWS_COUNT_ON_HOME_PAGE
+
+from news.forms import CommentForm
+
+
+HOME_URL = reverse('news:home')
 
 
 @pytest.mark.django_db
 def test_news_count(client, news_list):
-    url = reverse('news:home')
-    response = client.get(url)
-    object_list = response.context['object_list']
-    assert "news_list" in response.context
-    news_count = len(object_list)
-    assert news_count is NEWS_COUNT_ON_HOME_PAGE
+    response = client.get(HOME_URL)
+    news = response.context['object_list']
+    news_count = news.count()
+    assert news_count is settings.NEWS_COUNT_ON_HOME_PAGE
 
 
 @pytest.mark.django_db
 def test_news_order(client):
-    url = reverse('news:home')
-    response = client.get(url)
-    object_list = response.context['object_list']
-    all_dates = [news.date for news in object_list]
+    response = client.get(HOME_URL)
+    news = response.context['object_list']
+    all_dates = [news.date for news in news]
     sorted_dates = sorted(all_dates, reverse=True)
     assert all_dates == sorted_dates
 
 
 @pytest.mark.django_db
-def test_comments_order(client, comments, new):
-    url = reverse("news:detail", args=(new.id,))
-    response = client.get(url)
+def test_comments_order(client, comments, detail_url):
+    response = client.get(detail_url)
     assert "news" in response.context
     news = response.context['news']
     all_comments = news.comment_set.all()
     sorted_comments = sorted(all_comments,
-                             key=lambda comment: comment.created,
-                             reverse=False)
+                             key=lambda comment: comment.created)
     assert sorted_comments == comments
 
 
@@ -45,8 +45,8 @@ def test_comments_order(client, comments, new):
     ),
 )
 def test_form_availability_for_different_users(
-        new, parametrized_client, form_in_page
+        parametrized_client, form_in_page, detail_url
 ):
-    url = reverse('news:detail', args=(new.id,))
-    response = parametrized_client.get(url)
+    response = parametrized_client.get(detail_url)
     assert ('form' in response.context) is form_in_page
+    isinstance('form' in response.context, CommentForm)

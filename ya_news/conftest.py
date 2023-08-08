@@ -1,9 +1,11 @@
 from datetime import timedelta
 
 import pytest
+from django.conf import settings
+from django.urls import reverse
 from django.utils import timezone
+
 from news.models import Comment, News
-from yanews.settings import NEWS_COUNT_ON_HOME_PAGE
 
 
 @pytest.fixture
@@ -37,25 +39,35 @@ def comment(new, author):
 
 
 @pytest.fixture
-def id_for_args(new):
-    return new.id,
+def detail_url(new):
+    detail_url = reverse('news:detail', args=(new.id,))
+    return detail_url
 
 
 @pytest.fixture
-def id_comment_for_args(comment):
-    return comment.id,
+def edit_comment_url(comment):
+    edit_comment_url = reverse('news:edit', args=(comment.id,))
+    return edit_comment_url
 
 
 @pytest.fixture
-def form_data():
+def delete_comment_url(comment):
+    delete_comment_url = reverse('news:delete', args=(comment.id,))
+    return delete_comment_url
+
+
+@pytest.fixture
+def comment_form_data(new, author):
     return {
-        'text': 'Новый текст'
+        'text': 'Новый текст',
+        'news': new,
+        'author': author
     }
 
 
 @pytest.fixture
 def news_list():
-    for index in range(NEWS_COUNT_ON_HOME_PAGE + 1):
+    for index in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1):
         news = News.objects.create(title=f'Новость {index}',
                                    text='Просто текст.')
         news.save()
@@ -76,9 +88,3 @@ def comments(author, new):
         comment.save()
         comments.append(comment)
     return comments
-
-
-@pytest.fixture
-def comments_count_before(comments):
-    comments_count_before = Comment.objects.count()
-    return comments_count_before
