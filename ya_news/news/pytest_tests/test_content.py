@@ -12,8 +12,7 @@ HOME_URL = reverse('news:home')
 def test_news_count(client, news_list):
     response = client.get(HOME_URL)
     news = response.context['object_list']
-    news_count = news.count()
-    assert news_count is settings.NEWS_COUNT_ON_HOME_PAGE
+    assert news.count() == settings.NEWS_COUNT_ON_HOME_PAGE
 
 
 @pytest.mark.django_db
@@ -45,8 +44,9 @@ def test_comments_order(client, comments, detail_url):
     ),
 )
 def test_form_availability_for_different_users(
-        parametrized_client, form_in_page, detail_url
+        parametrized_client, form_in_page, detail_url, author
 ):
     response = parametrized_client.get(detail_url)
-    assert ('form' in response.context) is form_in_page
-    isinstance('form' in response.context, CommentForm)
+    assert ('form' in response.context) == form_in_page
+    if parametrized_client == author:
+        assert isinstance(response.context['form'], CommentForm)

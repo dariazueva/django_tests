@@ -26,16 +26,16 @@ class TestContent(TestCase):
         cls.edit_url = reverse('notes:edit', args=(cls.note.slug,))
 
     def test_notes_list_for_auth_user(self):
-        url = reverse('notes:list', None)
+        url = reverse('notes:list')
         response = self.author_client.get(url)
         notes = response.context['object_list']
-        self.assertEqual(self.note in notes, True)
+        self.assertIn(self.note, notes)
 
     def test_notes_list_for_anon_user(self):
-        url = reverse('notes:list', None)
+        url = reverse('notes:list')
         response = self.reader_client.get(url)
         notes = response.context['object_list']
-        self.assertEqual(self.note in notes, False)
+        self.assertNotIn(self.note, notes)
 
     def test_create_and_add_note_pages_contains_form(self):
         urls = (
