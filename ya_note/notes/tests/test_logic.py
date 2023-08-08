@@ -45,7 +45,7 @@ class TestNoteCreation(TestCase):
 
     def test_empty_slug(self):
         self.form_data.pop('slug')
-        response = self.auth_client.post(URL_TO_ADDgit, data=self.form_data)
+        response = self.auth_client.post(URL_TO_ADD, data=self.form_data)
         self.assertRedirects(response, URL_TO_DONE)
         self.assertEqual(Note.objects.count(), self.notes_counts + 1)
         new_note = Note.objects.get()
