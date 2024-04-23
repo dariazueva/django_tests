@@ -118,7 +118,20 @@ pip install -r requirements.txt
 python manage.py migrate
 ```
 
+Чтобы запустить проект ya_news, необходимо пройти в директорию этого проекта и загрузить фикстуры:
+
+```
+python manage.py loaddata news.json
+```
+Для запуска проекта ya_note шаг с загрузкой фикстур пропускаем.
+
 Запустить проект:
+
+```
+python manage.py runserver
+```
+
+Запустить тесты для обоих проектов:
 
 ```
 bash run_tests.sh
